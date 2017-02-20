@@ -80,6 +80,7 @@ opt_next(struct opt_iter *it, int argc, char const *const *argv,
 	assert(it);
 	assert(argc >= 0);
 	assert(argv);
+	assert(flags);
 
 	opt_set_error(it, OPT_NONE);
 	if (!it->pos) {    // go to the next argument
@@ -100,9 +101,6 @@ opt_next(struct opt_iter *it, int argc, char const *const *argv,
 	}
 
 	it->flag = *it->pos;
-	if (!flags) {
-		goto next_flag;
-	}
 	char const *flag_pos = strchr(flags, it->flag);
 	if (!flag_pos) {
 		opt_set_error(it, OPT_UNEXPECTED_FLAG);
