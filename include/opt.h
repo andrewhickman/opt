@@ -82,8 +82,7 @@ opt_get_arg(struct opt_iter *it, int argc, char const *const *argv)
 		opt_set_error(it, OPT_MISSING_ARG);
 		return NULL;
 	}
-	++it->index;
-	return it->pos = argv[it->index];
+	return it->pos = argv[++it->index];
 }
 
 static inline bool 
