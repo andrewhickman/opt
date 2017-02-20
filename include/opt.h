@@ -21,10 +21,9 @@ struct opt_error {
 struct opt_iter {
 	char             flag;
 	char const      *val;
-	struct opt_error error;
-
-	int              index;
 	char const      *pos;
+	int              index;
+	struct opt_error error;
 };
 
 static inline void 
@@ -39,7 +38,7 @@ opt_set_error(struct opt_iter *it, enum opt_error_type type)
 		break;
 	case OPT_UNEXPECTED_FLAG:
 	case OPT_MISSING_ARG:
-		it->error.data.flag = it->flag;
+		it->error.data.flag = *it->pos;
 		break;
 	case OPT_MISSING_FLAG:
 	case OPT_FINISHED_ITER:
@@ -73,6 +72,25 @@ opt_print_error(struct opt_error error)
 	}
 }
 
+static inline char const*
+opt_get_arg(struct opt_iter *it, int argc, char const *const *argv)
+{
+	if (it->pos[1] != '\0') {    // val is the rest of the arg
+		return ++it->pos;
+	}    // val is the next arg
+	if (it->index == argc - 1) {    // end of arg list
+		opt_set_error(it, OPT_MISSING_ARG);
+		return NULL;
+	}
+	++it->index;
+	it->pos = argv[it->index];
+	if (it->pos[0] == '-') {    // found more flags
+		opt_set_error(it, OPT_MISSING_ARG);
+		return NULL;
+	}
+	return it->pos;
+}
+
 static inline bool 
 opt_next(struct opt_iter *it, int argc, char const *const *argv,
          char const *flags) 
@@ -101,27 +119,14 @@ opt_next(struct opt_iter *it, int argc, char const *const *argv,
 	}
 
 	it->flag = *it->pos;
+	it->val = NULL;
 	char const *flag_pos = strchr(flags, it->flag);
 	if (!flag_pos) {
 		opt_set_error(it, OPT_UNEXPECTED_FLAG);
 		goto next_flag;
 	}
 	if (flag_pos[1] == ':') {    // flag has argument
-		if (it->pos[1] != '\0') {    // found more flags in arg
-			opt_set_error(it, OPT_MISSING_ARG);
-			goto next_flag;
-		}
-		if (it->index == argc - 1) {    // end of argument list
-			opt_set_error(it, OPT_MISSING_ARG);
-			goto next_arg;
-		}
-		++it->index;
-		it->pos = argv[it->index];
-		if (it->pos[0] == '-') {    // found more flags
-			opt_set_error(it, OPT_MISSING_ARG);
-			goto next_arg;
-		}
-		it->val = it->pos;
+		it->val = opt_get_arg(it, argc, argv);
 		goto next_arg;
 	}
 
