@@ -25,7 +25,7 @@ echo ./bin -c \"\"
 echo ./bin -
 ./bin -
 
-echo ./bin ""
+echo ./bin \"\"
 ./bin ""
 
 echo ./bin -avc data
@@ -33,3 +33,9 @@ echo ./bin -avc data
 
 echo ./bin -avb
 ./bin -avb
+
+echo ./bin --version
+./bin --version
+
+echo ./bin -ab-version
+./bin -ab-version

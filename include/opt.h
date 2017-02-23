@@ -76,13 +76,13 @@ static inline char const*
 opt_get_arg(struct opt_iter *it, int argc, char const *const *argv)
 {
 	if (it->pos[1] != '\0') {    // val is the rest of the arg
-		return ++it->pos;
+		return it->pos + 1;
 	}    // val is the next arg
 	if (it->index == argc - 1) {    // end of arg list
 		opt_set_error(it, OPT_MISSING_ARG);
 		return NULL;
 	}
-	return it->pos = argv[++it->index];
+	return argv[++it->index];
 }
 
 static inline bool 
@@ -117,14 +117,11 @@ opt_next(struct opt_iter *it, int argc, char const *const *argv,
 	char const *flag_pos = strchr(flags, it->flag);
 	if (!flag_pos) {
 		opt_set_error(it, OPT_UNEXPECTED_FLAG);
-		goto next_flag;
-	}
-	if (flag_pos[1] == ':') {    // flag has argument
+	} else if (flag_pos[1] == ':') {    // flag has argument
 		it->val = opt_get_arg(it, argc, argv);
 		goto next_arg;
 	}
 
-next_flag:    // go to the next flag in the current argument (if any)
 	++it->pos;
 	if (*it->pos == '\0') {
 next_arg:    // go to the next argument
@@ -133,3 +130,4 @@ next_arg:    // go to the next argument
 	}
 	return true;
 }
+
