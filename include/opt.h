@@ -12,10 +12,10 @@ struct opt_error {
 		OPT_MISSING_ARG,
 		OPT_MISSING_FLAG,
 	} type;
-	union opt_error_data {
+	union {
 		char const *arg;    // used by UNEXPECTED_ARG
 		char        flag;   // used by UNEXPECTED_FLAG and MISSING_ARG
-	} data;
+	};
 };
 
 struct opt_iter {
@@ -31,20 +31,18 @@ opt_set_error(struct opt_iter *it, enum opt_error_type type)
 {
 	it->error.type = type;
 	switch (type) {
-	case OPT_NONE:
-		return;
 	case OPT_UNEXPECTED_ARG:
-		it->error.data.arg = it->pos;
+		it->error.arg = it->pos;
+		it->flag = ':';
 		break;
 	case OPT_UNEXPECTED_FLAG:
 	case OPT_MISSING_ARG:
-		it->error.data.flag = *it->pos;
-		break;
+		it->error.flag = *it->pos;
 	case OPT_MISSING_FLAG:
 	case OPT_FINISHED_ITER:
-		break;
+		it->flag = '?';
+	case OPT_NONE:
 	}
-	it->flag = '?';
 }
 
 static inline void 
@@ -58,13 +56,13 @@ opt_print_error(struct opt_error error)
 		printf("Parsed all arguments\n");
 		break;
 	case OPT_UNEXPECTED_ARG:
-		printf("Got unexpected argument: %s\n", error.data.arg);
+		printf("Got unexpected argument: %s\n", error.arg);
 		break;
 	case OPT_UNEXPECTED_FLAG:
-		printf("Got unexpected flag: -%c\n", error.data.flag);
+		printf("Got unexpected flag: -%c\n", error.flag);
 		break;
 	case OPT_MISSING_ARG:
-		printf("Missing argument for flag: -%c\n", error.data.flag);
+		printf("Missing argument for flag: -%c\n", error.flag);
 		break;
 	case OPT_MISSING_FLAG:
 		printf("Missing flag\n");
@@ -114,6 +112,40 @@ opt_next(struct opt_iter *it, int argc, char const *const *argv,
 
 	it->flag = *it->pos;
 	it->val = NULL;
+	char const *flag_pos = strchr(flags, it->flag);
+	if (!flag_pos) {
+		opt_set_error(it, OPT_UNEXPECTED_FLAG);
+	} else if (flag_pos[1] == ':') {    // flag has argument
+		it->val = opt_get_arg(it, argc, argv);
+		goto next_arg;
+	}
+
+	++it->pos;
+	if (*it->pos == '\0') {
+next_arg:    // go to the next argument
+		++it->index;
+		it->pos = NULL;
+	}
+	return true;
+}
+
+static inline bool 
+opt_next_arg(struct opt_iter *it, int argc, char const *const *argv)
+{
+	assert(it);
+	assert(argc >= 0);
+	assert(argv);
+
+	opt_set_error(it, OPT_NONE);
+	if (!it->pos) {    // go to the next argument
+		if (it->index == argc) {    // end of argument list
+			opt_set_error(it, OPT_FINISHED_ITER);
+			return false;
+		}
+		it->pos = argv[it->index];
+	}
+
+	it->val = it->pos;
 	char const *flag_pos = strchr(flags, it->flag);
 	if (!flag_pos) {
 		opt_set_error(it, OPT_UNEXPECTED_FLAG);
