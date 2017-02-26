@@ -1,26 +1,34 @@
 #include "opt.h"
+#include "stdio.h"
+#include "string.h"
 
 int main(int argc, char const *argv[])
 {
+	char const *name = NULL;
+	bool verbose = false;
+
 	struct opt_iter it = { 0 };
-	opt_next(&it, argc, argv, "c:abd:");
-	while (opt_next(&it, argc, argv, "abc:d:-:")) {
+	while (opt_next(&it, argc, argv)) {
 		switch (it.flag) {
-		case 'a':
-		case 'b':
-			printf("Got arg -%c\n", it.flag);
-			break;
-		case 'c':
-		case 'd':
-			printf("Got arg -%c with val %s\n", it.flag, it.val);
-			break;
 		case '-':
-			printf("Got long arg --%s\n", it.val);
+			// Long args
+			if (!opt_next_arg(&it, argc, argv)) goto end;
+			if (strcmp("name", it.arg) == 0) {
+				if (!opt_next_arg(&it, argc, argv)) goto end;
+				name = it.arg;	
+			}
 			break;
-		case '?':
-			printf("Error: ");
-			opt_print_error(it.error);
+		case 'v':
+			verbose = true;
+			break;
+		case ':':
+			printf("Got unexpected arg %s\n", it.arg);
+			break;
+		default:
+			printf("Got unexpected flag -%c\n", it.flag);
 			break;
 		}
 	}
+end:
+	printf("Name: %s, verbose: %s\n", name, verbose ? "true" : "false");
 }
