@@ -50,7 +50,7 @@ opt_next_arg(struct opt_iter *it, int argc, char const *const *argv)
 /* Ignore flags, parse next argument */
 {
 	if (it->pos) {
-		++it->index;
+		_opt_incr(it);
 	}
 	if (it->index == argc) {
 		return false;
