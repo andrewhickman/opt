@@ -7,6 +7,6 @@ all: $(OBJECTS)
 build/%.o: source/%.c
 	gcc $(FLAGS) -I include -c -o $@ $<
 
-.PHONY: clean test
+.PHONY: clean 
 clean:
 	rm -rf build/*.o

@@ -4,6 +4,7 @@
 struct opt_iter {
 	char        flag;
 	char const *arg;
+
 	char const *pos;
 	int         index;
 };
@@ -37,9 +38,7 @@ opt_next(struct opt_iter *it, int argc, char const *const *argv)
 	}
 
 	it->flag = *it->pos;
-	it->arg = NULL;
-
-	++it->pos;
+	it->arg = ++it->pos;
 	if (*it->pos == '\0') {
 		_opt_incr(it);
 	}
@@ -48,16 +47,16 @@ opt_next(struct opt_iter *it, int argc, char const *const *argv)
 
 static inline bool
 opt_next_arg(struct opt_iter *it, int argc, char const *const *argv)
-/* Force parsing as argument */
+/* Ignore flags, parse next argument */
 {
-	if (!it->pos) {
-		if (it->index == argc) {
-			return false;
-		}
-		it->pos = argv[it->index];
+	if (it->pos) {
+		++it->index;
+	}
+	if (it->index == argc) {
+		return false;
 	}
 	it->flag = ':';
-	it->arg = it->pos;
+	it->arg = it->pos = argv[it->index];
 
 	_opt_incr(it);
 	return true;
