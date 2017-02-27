@@ -9,10 +9,23 @@ struct opt_iter {
 	int         index;
 };
 
+static inline struct opt_iter
+opt_init()
+{
+	return (struct opt_iter){ 0 };
+}
+
 static inline void
-_opt_incr(struct opt_iter *it)
+opt_incr(struct opt_iter *it)
 {
 	++it->index;
+	it->pos = NULL;
+}
+
+static inline void
+opt_decr(struct opt_iter *it)
+{
+	--it->index;
 	it->pos = NULL;
 }
 
@@ -28,19 +41,19 @@ opt_next(struct opt_iter *it, int argc, char const *const *argv)
 		if (*it->pos != '-') {
 			it->flag = ':';
 			it->arg = it->pos;
-			_opt_incr(it);
+			opt_incr(it);
 			return true;
 		}
 		++it->pos;
 		if (*it->pos == '\0') {
-			_opt_incr(it);
+			opt_incr(it);
 		}
 	}
 
 	it->flag = *it->pos;
 	it->arg = ++it->pos;
 	if (*it->pos == '\0') {
-		_opt_incr(it);
+		opt_incr(it);
 	}
 	return true;
 }
@@ -50,7 +63,7 @@ opt_next_arg(struct opt_iter *it, int argc, char const *const *argv)
 /* Ignore flags, parse next argument */
 {
 	if (it->pos) {
-		_opt_incr(it);
+		opt_incr(it);
 	}
 	if (it->index == argc) {
 		return false;
@@ -58,7 +71,29 @@ opt_next_arg(struct opt_iter *it, int argc, char const *const *argv)
 	it->flag = ':';
 	it->arg = it->pos = argv[it->index];
 
-	_opt_incr(it);
+	opt_incr(it);
 	return true;
 }
+
+static inline char const*
+opt_parse_arg(struct opt_iter *it, int argc, char const *const *argv)
+{
+	if (!opt_next_arg(it, argc, argv)) {
+		return NULL;
+	}
+	return it->arg;
+}
+
+static inline char const*
+opt_parse_arg_strict(struct opt_iter *it, int argc, char const *const *argv)
+{
+	if (!opt_next_arg(it, argc, argv)) {
+		return NULL;
+	} else if (it->arg[0] == '-') {
+		opt_decr(it);
+		return NULL;
+	}
+	return it->arg;
+}
+
 

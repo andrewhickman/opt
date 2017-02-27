@@ -5,24 +5,23 @@
 int main(int argc, char const *argv[])
 {
 	char const *name = NULL;
-	bool verbose = false;
+	int verbosity = 0;
 
-	struct opt_iter it = { 0 };
+	struct opt_iter it = opt_init();
 	opt_next_arg(&it, argc, argv);
 	while (opt_next(&it, argc, argv)) {
 		switch (it.flag) {
 		case '-':
 			// Long args
 			if (strcmp("name", it.arg) == 0) {
-				if (!opt_next_arg(&it, argc, argv)) {
+				name = opt_parse_arg_strict(&it, argc, argv);
+				if (!name) {
 					printf("Missing arg for --name\n");
-					goto end;
 				}
-				name = it.arg;	
 			}
 			break;
 		case 'v':
-			verbose = true;
+			++verbosity;
 			break;
 		case ':':
 			printf("Got unexpected arg %s\n", it.arg);
@@ -32,6 +31,5 @@ int main(int argc, char const *argv[])
 			break;
 		}
 	}
-end:
-	printf("Name: %s, verbose: %s\n", name, verbose ? "true" : "false");
+	printf("Name: %s, verbosity: %d\n", name, verbosity);
 }
