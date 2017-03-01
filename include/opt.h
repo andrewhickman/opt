@@ -1,3 +1,6 @@
+#ifndef OPT_H
+#define OPT_H
+
 #include "stdbool.h"
 #include "stddef.h"
 
@@ -96,4 +99,4 @@ opt_parse_arg_strict(struct opt_iter *it, int argc, char const *const *argv)
 	return it->arg;
 }
 
-
+#endif
